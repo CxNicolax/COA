@@ -99,13 +99,14 @@ app.post('/api/data', async (req, res) => {
 
 app.post('/api/correlazione', async (req, res) => {
     try {
-        const { file1, file2 } = req.body;
+        const { file1, file2, period } = req.body;
+        const windowSize = period || 180; // Usa 180 come default se non specificato
         const directoryPath = path.join(__dirname, 'Simboli');
 
         const data1 = await readFileData(path.join(directoryPath, file1));
         const data2 = await readFileData(path.join(directoryPath, file2));
 
-        const correlations = calculateCorrelations(data1, data2);
+        const correlations = calculateCorrelations(data1, data2, windowSize);
 
         res.json(correlations);
     } catch (error) {
@@ -124,17 +125,16 @@ async function readFileData(filePath) {
         .filter(item => !isNaN(item.value));
 }
 
-function calculateCorrelations(data1, data2) {
+function calculateCorrelations(data1, data2, windowSize) {
     const correlations = [];
-    const windowSize = 180; // Dimensione della finestra di tempo (180 giorni)
 
     for (let i = windowSize; i < Math.min(data1.length, data2.length); i++) {
         const correlation = pearsonCorrelation(
-            data1.slice(i - windowSize, i).map(d => d.value), // Prendi 180 giorni precedenti
-            data2.slice(i - windowSize, i).map(d => d.value) // Prendi 180 giorni precedenti
+            data1.slice(i - windowSize, i).map(d => d.value),
+            data2.slice(i - windowSize, i).map(d => d.value)
         );
         correlations.push({
-            date: data1[i].date, // Data del punto corrente
+            date: data1[i].date,
             correlation: correlation
         });
     }
