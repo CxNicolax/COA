@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COA - Grafico</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/2.0.0/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0/dist/chartjs-adapter-moment.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(90deg, #800080 0%, #00BFFF 100%); /* Gradiente da sinistra a destra */
+            color: white;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px;
+            margin: 10px 5px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+            button:hover {
+                background-color: rgba(255, 255, 255, 0.3);
+                transform: translateY(-5px);
+            }
+
+        #aggiorna {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+            #aggiorna:hover {
+                background-color: rgba(255, 255, 255, 0.3);
+                transform: translateY(-5px);
+            }
+
+        #separa {
+            background-color: rgba(0, 128, 0, 0.6);
+        }
+        #chartjs-tooltip {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 3px;
+            padding: 6px;
+            opacity: 0;
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #separaDD {
+            background-color: rgba(255, 69, 0, 0.6);
+        }
+
+        #aggrega {
+            background-color: rgba(255, 215, 0, 0.6);
+            color: black;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .home-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+
+        th, td {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px;
+            text-align: left;
+        }
+
+        .multiplier-input {
+            width: 60px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px;
+        }
+
+        th {
+            background-color: rgba(0, 0, 0, 0.2) !important;
+        }
+
+        tr {
+            background-color: rgba(0, 0, 0, 0.3) !important;
+        }
+
+            tr.selected {
+                background-color: rgba(200, 0, 200, 0.3) !important;
+            }
+
+        .date-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            gap: 20px;
+        }
+
+        .date-inputs input[type="date"], select {
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 50px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            margin: 0 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 700px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+            transform: translateY(0); /* Aggiungi questa proprietà */
+        }
+
+        select {
+            background-color: rgba(64, 64, 64, 0.9); /* Antracite */
+        }
+
+        #chart {
+            position: relative;
+            width: 100% !important;
+            height: 680px !important;
+        }
+
+        #scrollToTopBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 50%;
+            font-size: 18px;
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+
+            #scrollToTopBtn:hover {
+                background-color: rgba(0, 0, 0, 0.8);
+            }
+            #scrollToTopBtn svg {
+                width: 24px;
+                height: 24px;
+            }
+        #scrollToChartBtn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 99;
+            border: none;
+            outline: none;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            cursor: pointer;
+            padding: 12px;
+            border-radius: 50%;
+            font-size: 18px;
+            transition: opacity 0.3s, background-color 0.3s;
+            
+        }
+
+            #scrollToChartBtn:hover {
+                background-color: rgba(0, 0, 0, 0.8);
+            }
+
+            #scrollToChartBtn svg {
+                width: 24px;
+                height: 24px;
+            }
+
+    </style>
+</head>
+<body>
+    <button class="home-button" onclick="window.location.href='index.html'">Home</button>
+    <h1>COA - Grafico</h1>
+
+    <button id="aggiorna">Popola Dati - Ordina/Filtra</button>
+    <div class="table-controls">
+        <label for="sortBy">Ordina per:</label>
+        <select id="sortBy">
+            <option value="file">Nome File</option>
+            <option value="coaFactor">COA Factor</option>
+            <option value="maxDrawdown">Max Drawdown</option>
+        </select>
+
+        <label for="sortOrder">Ordine:</label>
+        <select id="sortOrder">
+            <option value="asc">Ascendente</option>
+            <option value="desc">Discendente</option>
+        </select>
+        <label for="filterMarket">Filtra per Mercato:</label>
+        <select id="filterMarket">
+            <option value="">Tutti i mercati</option>
+        </select>
+        <label for="filterSymbol">Filtra per Simbolo:</label>
+        <select id="filterSymbol">
+            <option value="">Tutti i simboli</option>
+        </select>
+    </div>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Seleziona</th>
+                <th>Size</th>
+                <th>Mercato</th>
+                <th>Simbolo</th>
+                <th>Nome File</th>
+                <th>COA Factor</th>
+                <th>Net profit</th>
+                <th>Max Drawdown</th>
+                <th>Margine</th>
+                <th>Valori</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="date-controls">
+        <button id="separa">Separa Equity</button>
+        <button id="separaDD">Separa Drowdown</button>
+        <button id="aggrega">Aggrega Equity</button>
+        <input type="date" id="startDate">
+        <input type="date" id="endDate">
+    </div>
+
+    <div class="chart-container">
+        <canvas id="chart"></canvas>
+    </div>
+    <div class="table-responsive">
+        <table id="performanceTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Metriche di Performance</th>
+                    <th>Valore</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Net profit</td>
+                    <td id="netProfit"></td>
+                </tr>
+                <tr>
+                    <td>Average drawdown day loss</td>
+                    <td id="averageDrawdownDayLoss"></td>
+                </tr>
+                <tr>
+                    <td>Max drawdown</td>
+                    <td id="maxDrawdown"></td>
+                </tr>
+                <tr>
+                    <td>Net profit / Max drawdown</td>
+                    <td id="netProfitOverMaxDrawdown"></td>
+                </tr>
+                <tr>
+                    <td>Enabled systems</td>
+                    <td id="enabledSystems"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script>
+
+        let data = [];
+
+
+        const marketMap = {
+          
+        };
+
+        populateFilterDropdowns();
+        updateTable();
+
+        function populateFilterDropdowns() {
+            const symbolDropdown = document.getElementById('filterSymbol');
+            const marketDropdown = document.getElementById('filterMarket');
+
+            // Popola il dropdown dei mercati
+            const markets = [...new Set(Object.values(marketMap))];
+            markets.forEach(market => {
+                const option = document.createElement('option');
+                option.value = market;
+                option.textContent = market;
+                marketDropdown.appendChild(option);
+            });
+
+            // Aggiungi un event listener al dropdown del mercato
+            marketDropdown.addEventListener('change', () => {
+                const selectedMarket = marketDropdown.value;
+                populateSymbolDropdown(selectedMarket);
+                updateTable(); // Aggiorna la tabella dopo aver cambiato il mercato
+            });
+
+            // Popola inizialmente il dropdown dei simboli
+            populateSymbolDropdown(''); // Inizialmente mostra tutti i simboli
+        }
+        document.getElementById('sortBy').addEventListener('change', updateTable);
+        document.getElementById('sortOrder').addEventListener('change', updateTable);
+        document.getElementById('filterMarket').addEventListener('change', () => {
+            const selectedMarket = document.getElementById('filterMarket').value;
+            populateSymbolDropdown(selectedMarket);
+            updateTable();
+        });
+        document.getElementById('filterSymbol').addEventListener('change', updateTable);
+
+        // Chiamare questa funzione all'avvio dell'applicazione
+        populateFilterDropdowns();
+        updateTable();
+
+        // Funzione per popolare il dropdown dei simboli in base al mercato selezionato
+        function populateSymbolDropdown(selectedMarket) {
+            const symbolDropdown = document.getElementById('filterSymbol');
+            symbolDropdown.innerHTML = '<option value="">Tutti i simboli</option>'; // Resetta il dropdown
+
+            const symbols = Object.entries(marketMap)
+                .filter(([symbol, market]) => selectedMarket === '' || market === selectedMarket)
+                .map(([symbol, market]) => symbol);
+
+            symbols.forEach(symbol => {
+                const option = document.createElement('option');
+                option.value = symbol;
+                option.textContent = symbol;
+                symbolDropdown.appendChild(option);
+            });
+
+            // Aggiungi un event listener al dropdown dei simboli
+            symbolDropdown.addEventListener('change', updateTable);
+
+        }
+
+        //Funzione Aggiorna Tabella
+        function updateTable() {
+            const tbody = document.querySelector('#dataTable tbody');
+            tbody.innerHTML = '';
+
+            // Filtra i dati in base al simbolo e al mercato
+            const filterSymbol = document.getElementById('filterSymbol').value;
+            const filterMarket = document.getElementById('filterMarket').value;
+            const filteredData = data.filter(item => {
+                const fileNameRegex = /_NC_(.+?)_/;
+                const match = item.file.match(fileNameRegex);
+                const symbol = match ? match[1] : '';
+                const market = marketMap[symbol] || '';
+                return (filterSymbol === '' || symbol === filterSymbol) &&
+                    (filterMarket === '' || market === filterMarket);
+            });
+
+            // Ordina i dati
+            const sortBy = document.getElementById('sortBy').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+
+            filteredData.sort((a, b) => {
+                let compare = 0;
+
+                if (sortBy === 'file') {
+                    compare = a.file.localeCompare(b.file);
+                } else if (sortBy === 'maxDrawdown') {
+                    const maxDrawdownA = Math.min(...a.data.map(d => d.value2));
+                    const maxDrawdownB = Math.min(...b.data.map(d => d.value2));
+                    compare = (maxDrawdownA * -1) - (maxDrawdownB * -1);
+                } else if (sortBy === 'coaFactor') {
+                    const coaFactorA = calculateCOAFactor(a);
+                    const coaFactorB = calculateCOAFactor(b);
+                    compare = coaFactorB - coaFactorA; // Ordine decrescente
+                }
+
+                return sortOrder === 'asc' ? compare : -compare;
+            });
+
+            filteredData.forEach((item, index) => {
+                const row = tbody.insertRow();
+                const maxDrawdown = Math.min(...item.data.map(d => d.value2)) * -1;
+
+                const fileNameRegex = /_NC_(.+?)_/;
+                const match = item.file.match(fileNameRegex);
+                const symbol = match ? match[1] : '';
+
+                
+
+                //const market = marketMap[symbol] || 'N/A';
+                // Recupera il mercato salvato nel localStorage
+                const savedMarkets = JSON.parse(localStorage.getItem('markets')) || {};
+                const market = savedMarkets[symbol] !== undefined ? savedMarkets[symbol] : (marketMap[symbol] || 'N/A');
+
+                // Calcola il Net profit (ultimo valore della seconda colonna)
+                const netProfit = item.data.length > 0 ? item.data[item.data.length - 1].value : 0;
+
+                // Calcola il Max Drawdown degli ultimi 90 giorni
+                const last90Days = item.data.slice(-90);
+                const maxDrawdownXDays = Math.min(...last90Days.map(d => d.value2)) * -1;
+                const netprofitXDays = item.data[item.data.length - 1].value - item.data[item.data.length - 90].value;
+                
+
+                // Recupera il margine salvato nel localStorage
+                const savedMargins = JSON.parse(localStorage.getItem('margins')) || {};
+                const margin = savedMargins[symbol] !== undefined ? savedMargins[symbol] : 'N/A';
+                const coaFactor = (netprofitXDays - maxDrawdownXDays) / margin;
+                // Aggiungi gli attributi data-file e data-index alla riga
+                row.setAttribute('data-file', item.file);
+                row.setAttribute('data-index', index);
+
+                row.innerHTML = `
+                            <td><input type="checkbox" id="check-${index}"></td>
+                            <td><input type="number" id="multiplier-${index}" value="1" min="0" step="0.1"></td>
+                            <td>${market}</td>
+                            <td>${symbol}</td>
+                            <td>${item.file}</td>
+                            <td>${coaFactor.toFixed(2)}</td>
+                            <td id="netProfit-${index}">$${Math.trunc(netProfit)}</td>
+                            <td id="maxDrawdown-${index}">$${Math.trunc(maxDrawdown)}</td>
+                            <td id="margin-${index}">$${Math.trunc(margin)}</td>
+                            <td>${item.data.length} valori</td>
+                        `;
+
+                const checkbox = row.querySelector(`#check-${index}`);
+                checkbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        row.classList.add('selected');
+                    } else {
+                        row.classList.remove('selected');
+                    }
+                });
+
+                const multiplierInput = row.querySelector(`#multiplier-${index}`);
+                multiplierInput.addEventListener('input', function () {
+                    const multiplier = parseFloat(this.value) || 1;
+                    const newMaxDrawdown = maxDrawdown * multiplier;
+                    const newMargin = margin * multiplier;
+                    const newNetprofit = netProfit * multiplier;
+                    row.querySelector(`#maxDrawdown-${index}`).textContent = `$${Math.trunc(newMaxDrawdown)}`;
+                    row.querySelector(`#margin-${index}`).textContent = `$${Math.trunc(newMargin)}`;
+                    row.querySelector(`#netProfit-${index}`).textContent = `$${Math.trunc(newNetprofit)}`;
+                });
+            });
+        }//Funzione Aggiorna Tabella
+
+
+        //Funzione Reflesh Data
+        async function refreshData(startDate = '', endDate = '') {
+            try {
+                const url = startDate && endDate
+                    ? `http://localhost:3000/api/data?startDate=${startDate}&endDate=${endDate}`
+                    : 'http://localhost:3000/api/data';
+                const response = await fetch(url);
+                data = await response.json();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Errore nel recupero dei dati. Controlla la console per i dettagli.');
+            }
+        }//Funzione Reflesh Data
+
+
+        // Funzione per calcolare il COA Factor
+        function calculateCOAFactor(item) {
+            if (Array.isArray(item.data) && item.data.length >= 90) {
+                const last90Days = item.data.slice(-90);
+                const maxDrawdownXDays = Math.min(...last90Days.map(d => d.value2)) * -1;
+                const netprofitXDays = item.data[item.data.length - 1].value - item.data[item.data.length - 90].value;
+
+                const symbol = item.file.match(/_NC_(.+?)_/)?.[1];
+                const savedMargins = JSON.parse(localStorage.getItem('margins')) || {};
+                const margin = parseFloat(savedMargins[symbol]) || 1; // Usa 1 se il margine non è disponibile
+
+                return (netprofitXDays - maxDrawdownXDays) / margin;
+            }
+            return -Infinity; // Restituisce -Infinity per gli elementi che non hanno abbastanza dati
+        }
+
+        //Crea Grafico
+        const ctx = document.getElementById('chart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                elements: {
+                    point: {
+                        radius: 0, // Nascondi i punti normalmente
+                        hoverRadius: 7, // Mostra un punto più grande al passaggio del mouse
+                        hoverBorderWidth: 2
+                    },
+                    line: {
+                        tension: 0 // Linee dritte tra i punti
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            parser: 'DD/MM/YYYY',
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'DD/MM/YYYY'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Data'
+                        },
+                        ticks: {
+                            source: 'auto',
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: 'Valore'
+                        },
+                        ticks: {
+                            source: 'auto'
+                        }
+                    }
+                },
+                plugins: {
+                    zoom: {
+                        pan: {
+                            enabled: true,
+                            mode: 'xy'
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true
+                            },
+                            mode: 'xy',
+                        },
+                        limits: {
+                            x: { min: 'original', max: 'original', minRange: 86400000 * 7 }, // minimo range di una settimana
+                            y: { min: 'original', max: 'original' }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        enabled: false,  // Disabilita il tooltip predefinito
+                        external: function (context) {
+                            // Tooltip Element
+                            let tooltipEl = document.getElementById('chartjs-tooltip');
+
+                            // Create element on first render
+                            if (!tooltipEl) {
+                                tooltipEl = document.createElement('div');
+                                tooltipEl.id = 'chartjs-tooltip';
+                                tooltipEl.innerHTML = '<table></table>';
+                                document.body.appendChild(tooltipEl);
+                            }
+
+                            // Hide if no tooltip
+                            const tooltipModel = context.tooltip;
+                            if (tooltipModel.opacity === 0) {
+                                tooltipEl.style.opacity = 0;
+                                return;
+                            }
+
+                            function getBody(bodyItem) {
+                                return bodyItem.lines;
+                            }
+
+                            // Set Text
+                            if (tooltipModel.body) {
+                                const titleLines = tooltipModel.title || [];
+                                const bodyLines = tooltipModel.body.map(getBody);
+
+                                let innerHtml = '<thead>';
+
+                                titleLines.forEach(function (title) {
+                                    innerHtml += '<tr><th style="font-weight: bold;">' + title + '</th></tr>';
+                                });
+                                innerHtml += '</thead><tbody>';
+
+                                bodyLines.forEach(function (body, i) {
+                                    const colors = tooltipModel.labelColors[i];
+                                    const colorSquare = `<span style="display:inline-block; width:10px; height:10px; margin-right:5px; background-color:rgb(${colors.backgroundColor.r}, ${colors.backgroundColor.g}, ${colors.backgroundColor.b});"></span>`;
+                                    innerHtml += '<tr><td>' + colorSquare + '<span style="font-weight: bold;">' + body + '</span></td></tr>';
+                                });
+                                innerHtml += '</tbody>';
+
+                                let tableRoot = tooltipEl.querySelector('table');
+                                tableRoot.innerHTML = innerHtml;
+                            }
+
+                            // Position tooltip slightly more to the right and down
+                            const position = context.chart.canvas.getBoundingClientRect();
+                            tooltipEl.style.opacity = 1;
+                            tooltipEl.style.position = 'absolute';
+                            tooltipEl.style.left = position.left + window.scrollX + 100 + 'px';
+                            tooltipEl.style.top = position.top + window.scrollY + 45 + 'px';
+                            tooltipEl.style.font = tooltipModel.options.bodyFont.string;
+                            tooltipEl.style.padding = '1px 3px';
+                            tooltipEl.style.fontSize = '10px';
+                            tooltipEl.style.fontWeight = 'bold';
+                            tooltipEl.style.pointerEvents = 'none';
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                animation: {
+                    duration: 0 // disabilita le animazioni per migliorare le prestazioni
+                }
+            }
+        }); //Crea Grafico
+
+
+
+
+        // Crea il pulsante di reset zoom e posizione
+        const resetZoomButton = document.createElement('button');
+        resetZoomButton.textContent = 'Reset Zoom e Posizione';
+        resetZoomButton.style.position = 'absolute';
+        resetZoomButton.style.top = '10px';
+        resetZoomButton.style.right = '10px';
+        resetZoomButton.style.padding = '5px 10px';
+        resetZoomButton.style.border = 'none';
+        resetZoomButton.style.borderRadius = '5px';
+        resetZoomButton.style.background = '#4CAF50';
+        resetZoomButton.style.color = 'white';
+        resetZoomButton.style.cursor = 'pointer';
+        // Aggiungi il pulsante al contenitore del grafico
+        document.getElementById('chart').parentNode.style.position = 'relative';
+        document.getElementById('chart').parentNode.appendChild(resetZoomButton);
+
+        // Grafico evento di click per resettare lo zoom e la posizione
+        resetZoomButton.addEventListener('click', () => {
+            if (chart.resetZoom) {
+                chart.resetZoom();
+            }
+            // Rimuovi la chiamata a resetPan se non è disponibile
+            // if (chart.resetPan) {
+            //     chart.resetPan();
+            // }
+        });
+
+
+        //Pulsante Aggiorna
+        document.getElementById('aggiorna').addEventListener('click', () => {
+            updateTable();
+            refreshData();
+
+        });
+
+        // Funzione di utilità per aggiornare il grafico
+        function updateChartAndScales(datasets, startDate, endDate) {
+            console.log('Updating chart with datasets:', datasets);
+            if (Array.isArray(datasets) && datasets.length > 0) {
+                chart.data.datasets = datasets;
+
+                if (startDate) {
+                    chart.options.scales.x.min = moment(startDate, 'YYYY-MM-DD').format('DD/MM/YYYY');
+                } else {
+                    delete chart.options.scales.x.min;
+                }
+
+                if (endDate) {
+                    chart.options.scales.x.max = moment(endDate, 'YYYY-MM-DD').format('DD/MM/YYYY');
+                } else {
+                    delete chart.options.scales.x.max;
+                }
+
+                chart.update();
+            } else {
+                console.log('No valid datasets provided');
+            }
+        }
+
+
+        //Pulsante Separa
+        document.getElementById('separa').addEventListener('click', () => {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            refreshData(startDate, endDate).then(() => {
+                const selectedData = Array.from(document.querySelectorAll('#dataTable tbody tr'))
+                    .filter(row => row.querySelector('input[type="checkbox"]').checked)
+                    .map(row => {
+                        const index = row.getAttribute('data-index');
+                        const file = row.getAttribute('data-file');
+                        const item = data.find(d => d.file === file);
+                        const multiplierInput = row.querySelector(`#multiplier-${index}`);
+                        const multiplier = multiplierInput ? parseFloat(multiplierInput.value) || 1 : 1;
+                        return {
+                            ...item,
+                            data: item.data.map(d => ({ ...d, value: d.value * multiplier }))
+                        };
+                    });
+
+                if (selectedData.length > 0 && selectedData[0].data.length > 0) {
+                    const datasets = selectedData.map(item => ({
+                        label: item.file,
+                        data: item.data.map(d => ({ x: d.date, y: d.value })),
+                        borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                        fill: false,
+                        pointHitRadius: 15,
+                        pointRadius: 1
+                    }));
+
+                    updateChartAndScales(datasets, startDate, endDate);
+                } else {
+                    console.log('Nessun dato selezionato o nessun dato nel range di date specificato');
+                }
+            });
+        });
+
+        //Pulsante SeparaDD
+        document.getElementById('separaDD').addEventListener('click', () => {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            refreshData(startDate, endDate).then(() => {
+                const selectedData = Array.from(document.querySelectorAll('#dataTable tbody tr'))
+                    .filter(row => row.querySelector('input[type="checkbox"]').checked)
+                    .map(row => {
+                        const index = row.getAttribute('data-index');
+                        const file = row.getAttribute('data-file');
+                        const item = data.find(d => d.file === file);
+                        const multiplierInput = row.querySelector(`#multiplier-${index}`);
+                        const multiplier = multiplierInput ? parseFloat(multiplierInput.value) || 1 : 1;
+                        return {
+                            ...item,
+                            data: item.data.map(d => ({ ...d, value2: d.value2 * multiplier }))
+                        };
+                    });
+
+                if (selectedData.length > 0 && selectedData[0].data.length > 0) {
+                    chart.data.datasets = selectedData.map(item => ({
+                        label: item.file + ' (Drawdown)',
+                        data: item.data.map(d => ({ x: d.date, y: d.value2 })),
+                        backgroundColor: `hsla(${Math.random() * 360}, 70%, 50%, 0.6)`,  // Aggiunto alpha per trasparenza
+                        borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                        borderWidth: 1,  // Linee più sottili
+                        fill: false,
+                        pointRadius: 1,
+                        pointHitRadius: 15,
+
+                    }));
+
+                    if (startDate) {
+                        const [year, month, day] = startDate.split('-');
+                        chart.options.scales.x.min = `${day}/${month}/${year}`;
+                    } else {
+                        delete chart.options.scales.x.min;
+                    }
+
+                    if (endDate) {
+                        const [year, month, day] = endDate.split('-');
+                        chart.options.scales.x.max = `${day}/${month}/${year}`;
+                    } else {
+                        delete chart.options.scales.x.max;
+                    }
+
+                    chart.update();
+                    chart.resetZoom();
+                    chart.resetPan();
+                } else {
+                    console.log('Nessun dato selezionato o nessun dato nel range di date specificato');
+                }
+            });
+        });
+
+        //Pulsante Aggrega
+        document.getElementById('aggrega').addEventListener('click', () => {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            refreshData(startDate, endDate).then(() => {
+                const selectedData = Array.from(document.querySelectorAll('#dataTable tbody tr'))
+                    .filter(row => row.querySelector('input[type="checkbox"]').checked)
+                    .map(row => {
+                        const index = row.getAttribute('data-index');
+                        const file = row.getAttribute('data-file');
+                        const item = data.find(d => d.file === file);
+                        const multiplierInput = row.querySelector(`#multiplier-${index}`);
+                        const multiplier = multiplierInput ? parseFloat(multiplierInput.value) || 1 : 1;
+                        return {
+                            ...item,
+                            data: item.data.map(d => ({
+                                ...d,
+                                value: d.value * multiplier,
+                                value2: d.value2 * multiplier
+                            }))
+                        };
+                    });
+
+                if (selectedData.length > 0 && selectedData[0].data.length > 0) {
+                    // Creare oggetti per aggregare i valori per data
+                    const aggregatedData1 = {};
+                    const aggregatedData2 = {};
+
+                    // Sommare i valori per ogni data
+                    selectedData.forEach(item => {
+                        item.data.forEach(d => {
+                            if (!aggregatedData1[d.date]) {
+                                aggregatedData1[d.date] = 0;
+                                aggregatedData2[d.date] = 0;
+                            }
+                            aggregatedData1[d.date] += d.value;
+                            aggregatedData2[d.date] += d.value2;
+                        });
+                    });
+
+                    // Convertire gli oggetti aggregati in array di oggetti
+                    const aggregatedArray1 = Object.entries(aggregatedData1).map(([date, value]) => ({ date, value }));
+                    const aggregatedArray2 = Object.entries(aggregatedData2).map(([date, value]) => ({ date, value }));
+
+                    // Ordinare gli array per data
+                    const sortByDate = (a, b) => {
+                        const [dayA, monthA, yearA] = a.date.split('/');
+                        const [dayB, monthB, yearB] = b.date.split('/');
+                        return new Date(`${yearA}-${monthA}-${dayA}`) - new Date(`${yearB}-${monthB}-${dayB}`);
+                    };
+                    aggregatedArray1.sort(sortByDate);
+                    aggregatedArray2.sort(sortByDate);
+
+                    // Aggiornare il grafico con i dati aggregati
+                    chart.data.datasets = [
+                        {
+                            type: 'line',
+                            label: 'Portafoglio',
+                            data: aggregatedArray1.map(d => ({ x: d.date, y: d.value })),
+                            borderColor: 'green',
+                            backgroundColor: 'green',
+                            fill: false,
+                            pointHitRadius: 15,
+                            pointRadius: 1
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Sofferenza',
+                            data: aggregatedArray2.map(d => ({ x: d.date, y: d.value })),
+                            borderColor: 'red',
+                            backgroundColor: 'red',
+                            fill: false,
+                            pointHitRadius: 15,
+                            pointRadius: 1
+                        }
+                    ];
+                    // Popola la tabella delle metriche di performance
+                    const netProfit = aggregatedArray1[aggregatedArray1.length - 1].value;
+                    const maxDrawdown = Math.min(...aggregatedArray2.map(d => d.value)) * -1;
+                    const negativeDays = aggregatedArray2.filter(d => d.value < 0);
+                    const averageDrawdownDayLoss = negativeDays.length > 0 ? negativeDays.reduce((sum, d) => sum + d.value, 0) / negativeDays.length * -1 : 0;
+                    const netProfitOverMaxDrawdown = maxDrawdown !== 0 ? netProfit / maxDrawdown : 0;
+                    const enabledSystems = selectedData.length;
+
+                    document.getElementById('netProfit').textContent = `$${netProfit.toFixed(0)}`;
+                    document.getElementById('averageDrawdownDayLoss').textContent = `$${averageDrawdownDayLoss.toFixed(0)}`;
+                    document.getElementById('maxDrawdown').textContent = `$${maxDrawdown.toFixed(0)}`;
+                    document.getElementById('netProfitOverMaxDrawdown').textContent = `${netProfitOverMaxDrawdown.toFixed(0)}`;
+                    document.getElementById('enabledSystems').textContent = enabledSystems;
+
+                    if (startDate) {
+                        const [year, month, day] = startDate.split('-');
+                        chart.options.scales.x.min = `${day}/${month}/${year}`;
+                    } else {
+                        delete chart.options.scales.x.min;
+                    }
+
+                    if (endDate) {
+                        const [year, month, day] = endDate.split('-');
+                        chart.options.scales.x.max = `${day}/${month}/${year}`;
+                    } else {
+                        delete chart.options.scales.x.max;
+                    }
+
+                    chart.update();
+                    chart.resetZoom();
+                    chart.resetPan();
+
+
+                } else {
+                    console.log('Nessun dato selezionato o nessun dato nel range di date specificato');
+                }
+            });
+        });
+
+        // Imposta le date iniziali
+        function setInitialDates() {
+            const today = new Date();
+            const startDate = new Date(2011, 0, 2); // 1 gennaio 2010
+
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        }
+        setInitialDates();
+
+        // Carica i dati iniziali
+        refreshData();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const scrollToChartBtn = document.getElementById('scrollToChartBtn');
+            const chartElement = document.querySelector('.chart-container'); // Assicurati che il tuo grafico abbia questa classe
+            const chartControls = document.querySelector('.date-controls'); // Assumi che i pulsanti sopra il grafico abbiano questa classe
+
+            if (scrollToChartBtn && chartElement && chartControls) {
+                scrollToChartBtn.addEventListener('click', function () {
+                    // Calcola la posizione dei controlli del grafico
+                    const controlsRect = chartControls.getBoundingClientRect();
+                    const scrollTarget = window.scrollY + controlsRect.top - 20; // 20px di spazio sopra i controlli
+
+                    // Scorri alla posizione calcolata
+                    window.scrollTo({
+                        top: scrollTarget,
+                        behavior: 'smooth'
+                    });
+                });
+
+                // Mostra/nascondi il pulsante in base alla posizione di scroll
+                window.addEventListener('scroll', function () {
+                    const chartRect = chartElement.getBoundingClientRect();
+                    if (chartRect.bottom < 0 || chartRect.top > window.innerHeight) {
+                        scrollToChartBtn.style.display = 'block';
+                    } else {
+                        scrollToChartBtn.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+
+        // Funzione per scorrere in cima alla pagina
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Mostra o nascondi il pulsante in base allo scroll
+        window.onscroll = function () {
+            var scrollToTopBtn = document.getElementById("scrollToTopBtn");
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                scrollToTopBtn.style.opacity = "1";
+            } else {
+                scrollToTopBtn.style.opacity = "0";
+            }
+        };
+
+        // Aggiungi l'event listener al pulsante quando il DOM è completamente caricato
+        document.addEventListener('DOMContentLoaded', function () {
+            var scrollToTopBtn = document.getElementById("scrollToTopBtn");
+            if (scrollToTopBtn) {
+                scrollToTopBtn.addEventListener("click", scrollToTop);
+            } else {
+                console.error("Pulsante 'Torna in cima' non trovato");
+            }
+        });
+
+    </script>
+
+    <button id="scrollToTopBtn" title="Torna in cima">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" />
+        </svg>
+    </button>
+    <button id="scrollToChartBtn" title="Vai al grafico">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M3,22V8H7V22H3M10,22V2H14V22H10M17,22V14H21V22H17Z" />
+        </svg>
+    </button>
+</body>
+</html>
